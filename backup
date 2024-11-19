@@ -1,0 +1,62 @@
+import newspaper
+import telebot
+import requests
+import datetime
+import time
+from newspaper import Article
+from telebot import types
+
+TOKEN = '6223499719:AAEhZLCvyHG0C6UDxrVVBtMYQVpVsE6LJBg'
+CHAT_ID = '770415364'
+URL = 'https://proglib.io/p/bezboleznennyy-it-relokeyt-9-sovetov-po-pereezdu-v-2023-godu-2023-03-28'
+
+bot = telebot.TeleBot(TOKEN)
+article = Article(URL)
+article.download()
+article.parse()
+title = article.title
+text = article.text
+img = article.top_image
+
+
+def find_news():
+    sina_paper = newspaper.build('https://proglib.io/', language='ru')
+    for category in sina_paper.category_urls():
+        print(category)
+
+
+def get_news():
+    news = [(img, title, text)]
+    return news
+
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.send_message(message.chat.id, "Привет! Я бот для отправки новостей из сферы IT.")
+
+
+@bot.message_handler(commands=['news'])
+def send_news_loop(message):
+    global text
+
+    news = get_news()
+
+    if len(news) > 0:
+        for img, title, text in news:
+            bot.send_photo(message.chat.id, photo=img)
+            bot.send_message(message.chat.id, text=title)
+
+            if len(text) > 4096:
+                for x in range(0, len(text), 4096):
+                    bot.send_message(message.chat.id, text='{}'.format(text[x:x + 4096]))
+            else:
+                bot.send_message(message.chat.id, text='{}'.format(text))
+            time.sleep(1)
+    else:
+        print("Не удалось найти новости.")
+
+
+if __name__ == '__main__':
+     # bot.send_message(message.chat.id, text='Бот запущен.')
+     bot.infinity_polling()
+     print(text)
